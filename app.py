@@ -10,6 +10,21 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 import lightgbm as lgb
 
+# Function to calculate accuracy
+def calculate_accuracy(model, features_df, prediction):
+    # Assuming you have a validation set stored in a variable called validation_df
+    validation_df = pd.read_csv('validation_data.csv')  # Load your validation data here
+    X_validation = validation_df.drop(columns=['target_column'])
+    y_validation = validation_df['target_column']
+    
+    # Make predictions on the validation set
+    y_pred = model.predict(X_validation)
+    
+    # Calculate accuracy
+    accuracy = np.mean(y_pred == y_validation)
+    
+    return accuracy
+
 st.write("""
 # Solar Energy Generation Prediction""")
 
@@ -90,6 +105,9 @@ if st.button('Predict'):
     prediction = loaded_reg.predict(features_df)[0]
     st.info('Prediction completed!')
     st.success(f"The forecasted power output is {np.round(prediction + k, 2)} kW/h")
-    st.success(f"The model accuracy is {model_accuracy * 100:.2f}%")
+    
+    # Calculate accuracy based on a sample dataset or use a validation set
+    accuracy_result = calculate_accuracy(loaded_reg, features_df, prediction)
+    st.success(f"The model accuracy is {accuracy_result * 100:.2f}%")
 
 st.write("---")
