@@ -46,7 +46,7 @@ elif selected_models == 'Light GBM':
     model = pipeline_rfc
 
 # Load dataset
-model_path = "SnehRex1/solar-predict/solarcast_df_clean281221.csv"  # Replace with the actual path to your model file
+model_path = "model.pkl"  # Replace with the actual path to your model file
 df = pd.read_csv('solarcast_df_clean281221.csv', index_col=0)
 
 # Create list for months and days to include in month widget
