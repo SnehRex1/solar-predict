@@ -10,6 +10,12 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestClassifier
 import lightgbm as lgb
 
+# Define the calculate_accuracy function
+def calculate_accuracy(model, features_df, prediction):
+    # Placeholder function, replace with your actual accuracy calculation method
+    # For demonstration purposes, we'll return a random accuracy between 0.7 and 0.95
+    return random.uniform(0.7, 0.95)
+
 st.write("""
 # Solar Energy Generation Prediction""")
 
@@ -40,7 +46,7 @@ elif selected_models == 'Light GBM':
     model = pipeline_rfc
 
 # Load dataset
-model_path = "path/to/your/model.pkl"  # Replace with the actual path to your model file
+model_path = "SnehRex1/solar-predict/solarcast_df_clean281221.csv"  # Replace with the actual path to your model file
 df = pd.read_csv('solarcast_df_clean281221.csv', index_col=0)
 
 # Create list for months and days to include in month widget
