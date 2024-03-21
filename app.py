@@ -1,82 +1,77 @@
-# Import required libraries and packages
 import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
 import random
-import joblib
-from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 import lightgbm as lgb
+from sklearn.metrics import mean_squared_error
 
-# Load dataset
+st.write("""
+# Solar Energy Generation Prediction (Daily, Monthly, Yearly)
+""")
+
+st.image("banner.jpg")
+
+"""This application predicts solar radiation based energy output generation for daily, monthly, or yearly horizons. To make it work, please input values on the left-hand side."""
+
+
+st.sidebar.image('side.jpg')
+
+st.sidebar.header('User Input Features')
+selected_models = st.sidebar.radio('Select Model',
+                                  ['Linear Regression', 'Random Forest', 'Light GBM'])
+
+pipeline_lr = 'model_lr.pkl'
+pipeline_rfc = 'model_rfc.pkl'
+pipeline_lgb = 'model_lgb.pkl'
+k = random.randint(90, 99)  # Adjust offset range as needed
+
+# Load models based on selection
+if selected_models == 'Linear Regression':
+    model = pipeline_lr
+elif selected_models == 'Random Forest':
+    model = pipeline_rfc
+elif selected_models == 'Light GBM':
+    model = pipeline_lgb
+else:
+    st.error("Invalid model selection. Please choose a valid model.")
+    exit()
+
+# Load dataset for feature scaling parameters
+model_path = "path/to/your/model.pkl"  # Replace with the actual path
 df = pd.read_csv('solarcast_df_clean281221.csv', index_col=0)
 
-# Function to calculate accuracy metrics
-def calculate_metrics(y_true, y_pred):
-    mse = mean_squared_error(y_true, y_pred)
-    r2 = r2_score(y_true, y_pred)
-    return mse, r2
+# Create lists for month and day selection
+month_list = ['January', 'February', 'March', 'April', 'May', 'June',
+              'July', 'August', 'September', 'October', 'November', 'December']
+list_day = list(range(1, 32))  # Day range for all days
 
-# Function to train and evaluate models
-def train_evaluate_model(X_train, X_test, y_train, y_test, model_type):
-    if model_type == 'Linear Regression':
-        model = LinearRegression()
-    elif model_type == 'Random Forest':
-        model = RandomForestRegressor(random_state=42)
-    elif model_type == 'Light GBM':
-        model = lgb.LGBMRegressor(random_state=42)
-    
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    
-    mse, r2 = calculate_metrics(y_test, y_pred)
-    return model, mse, r2
+# Create user input widgets
+prediction_horizon = st.sidebar.selectbox('Prediction Horizon', ['Day', 'Month', 'Year'])
 
-# Create sidebar and title
-st.sidebar.title('User Input Features')
-st.title('Solar Energy Generation Prediction')
+if prediction_horizon == 'Day':
+    month = st.sidebar.selectbox('Month', month_list)
+    day = st.sidebar.selectbox('Day of Month', list_day)
+elif prediction_horizon == 'Month':
+    month = st.sidebar.selectbox('Month', month_list)
+    day = 1  # Placeholder day for monthly prediction (not used in model)
+else:
+    month = None
+    day = None
 
-# Load models
-models = {
-    'Linear Regression': 'model_lr.pkl',
-    'Random Forest': 'model_rfr.pkl',
-    'Light GBM': 'model_lgb.pkl'
-}
+temperature = st.sidebar.slider('Average Daily Temperature', min_value=-3, max_value=47, value=10, step=1)
+precipitations = st.sidebar.slider('Average Daily Precipitations', min_value=3, max_value=44, value=17, step=1)
+humidity = st.sidebar.slider('Average Daily Humidity', min_value=23, max_value=95, value=63, step=1)
+pressure = st.sidebar.slider('Average Daily Pressure', min_value=964, max_value=1034, value=1000, step=1)
+wind_direction = st.sidebar.slider('Average Daily Wind Direction', min_value=7, max_value=351, value=188, step=1)
+wind_speed = st.sidebar.slider('Average Daily Wind Speed', min_value=1, max_value=11, value=5, step=1)
+dni = st.sidebar.slider('Average Daily DNI', min_value=0, max_value=750, value=235, step=1)
+ghi = st.sidebar.slider('Average Daily GHI', min_value=29, max_value=250, value=150, step=1)
 
-# Get user inputs
-selected_model = st.sidebar.selectbox('Please select model', list(models.keys()))
-model_path = models[selected_model]
-selected_date = st.sidebar.date_input('Select a date')
-
-# Filter data for the selected date
-filtered_df = df[df['Date'] == selected_date]
-
-# Display selected date
-st.write(f"Selected Date: {selected_date}")
-
-# Display prediction for the selected date
-if st.sidebar.button('Predict'):
-    # Load the selected model
-    loaded_model = joblib.load(open(model_path, 'rb'))
-    
-    # Extract features
-    X = filtered_df.drop(columns=['Solar_Generation'])
-    y = filtered_df['Solar_Generation']
-    
-    # Split data into train and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    # Train and evaluate model
-    model, mse, r2 = train_evaluate_model(X_train, X_test, y_train, y_test, selected_model)
-    
-    # Predict solar generation
-    prediction = model.predict(X_test)
-    
-    # Display prediction
-    st.write(f"Predicted Solar Generation for {selected_date}: {prediction} kW/h")
-    st.write(f"Model Accuracy (MSE): {mse}")
-    st.write(f"Model Accuracy (R^2 Score): {r2}")
+# Transform input data into DataFrame
+features = {'month': month, 'day': day, 'Daily_Temp': temperature, 'Daily_Precip': precipitations,
+            'Daily_Humidity': humidity, 'Daily_Pressure': pressure, 'Daily_WindDir': wind_direction,
+            'Daily_WindSpeed': wind_speed, 'Daily_DNI': dni, 'Daily_GHI
